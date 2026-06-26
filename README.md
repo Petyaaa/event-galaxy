@@ -1,4 +1,4 @@
-##  CampusEvent Hub
+##  Event Galaxy Hub
 
 A comprehensive web-based platform designed to connect students, teachers, and administrators. This application allows users to easily create, manage, and join various academic, extracurricular, and administrative events in one centralized location. 
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
