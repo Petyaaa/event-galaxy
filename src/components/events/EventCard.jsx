@@ -1,6 +1,5 @@
-import { Event } from "@/types/event";
-
 export default function EventCard({ event }) {
+
   return (
     <div className="rounded-xl border p-4 shadow-sm">
       <h3 className="text-xl font-bold">{event.title}</h3>
