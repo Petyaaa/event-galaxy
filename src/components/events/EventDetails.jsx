@@ -26,9 +26,10 @@ export default function EventDetails({ event, onRegister, isRegistered }) {
           </span>
         </div>
 
-        <button
-          disabled={isFull && !isRegistered}
-          onClick={onRegister}
+        <RegisterButton
+            event={event}
+            isRegistered={isRegistered}
+            onRegister={onRegister}
           className={`px-6 py-2 rounded-xl font-semibold border transition
             ${
               isRegistered
@@ -39,7 +40,7 @@ export default function EventDetails({ event, onRegister, isRegistered }) {
             }`}
         >
           {isRegistered ? "Cancel Registration" : isFull ? "Full" : "Register"}
-        </button>
+        </RegisterButton>
       </div>
     </div>
   );

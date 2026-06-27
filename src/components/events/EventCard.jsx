@@ -1,7 +1,9 @@
+import Link from "next/link";
 export default function EventCard({ event }) {
 
   return (
-    <div className="rounded-xl border p-4 shadow-sm">
+    <Link href={`/events/${event.id}`}>
+      <div className="rounded-xl border p-4 shadow-sm hover:shadow-lg transition cursor-pointer">
       <h3 className="text-xl font-bold">{event.title}</h3>
 
       <p className="mt-2 text-sm text-gray-600">
@@ -23,5 +25,6 @@ export default function EventCard({ event }) {
         {event.confirmedCount}/{event.capacity}
       </div>
     </div>
-  );
+  </Link>
+);
 }
