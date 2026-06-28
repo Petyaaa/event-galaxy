@@ -1,0 +1,7 @@
+{
+  "routing": {
+    "agent_rules": "./AGENTS.md",
+    "execution_engine": "playwright",
+    "ci_cd_provider": "github-actions"
+  }
+}

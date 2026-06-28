@@ -1,0 +1,9 @@
+{
+  "project": "Event Galaxy QA",
+  "ai_config": {
+    "primary_model": "gpt-5.5",
+    "speed_profile": "medium-high-standard",
+    "architecture": "no-subagents"
+  },
+  "index_paths": ["./src", "./tests"]
+}
