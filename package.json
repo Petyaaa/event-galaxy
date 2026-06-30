@@ -4,9 +4,17 @@
   "private": true,
   "scripts": {
     "assets": "node scripts/generate-campus-assets.mjs",
-    "dev": "next dev",
+    "dev": "next dev -p 3010",
     "build": "next build",
     "start": "next start",
+    "db:up": "docker compose -f docker-compose.campuspulse.yml up -d",
+    "db:down": "docker compose -f docker-compose.campuspulse.yml down",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio",
+    "seed": "node prisma/seed.mjs",
+    "worker": "node src/worker/notification-worker.mjs",
+    "worker:once": "node src/worker/notification-worker.mjs --once",
     "test:e2e": "playwright test",
     "validate": "next build && playwright test",
     "prepare": "husky install"

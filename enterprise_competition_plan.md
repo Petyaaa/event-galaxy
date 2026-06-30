@@ -304,14 +304,14 @@ Recommended ports:
 
 - Existing external Postgres: leave untouched.
 - CampusPulse Postgres container internal port: `5432`.
-- CampusPulse Postgres host port: `55432`.
+- CampusPulse Postgres host port: `55434` in this workspace because `55432` and `55433` are already allocated.
 - CampusPulse Next.js dev server: `3010`.
 - Optional worker metrics/readiness port: `3011`.
 
 Recommended database URL:
 
 ```bash
-DATABASE_URL="postgresql://campuspulse:campuspulse_dev_password@localhost:55432/campuspulse_enterprise?schema=public"
+DATABASE_URL="postgresql://campuspulse:campuspulse_dev_password@localhost:55434/campuspulse_enterprise?schema=public"
 ```
 
 Recommended Docker Compose service:
@@ -327,7 +327,7 @@ services:
       POSTGRES_PASSWORD: campuspulse_dev_password
       POSTGRES_DB: campuspulse_enterprise
     ports:
-      - "55432:5432"
+      - "127.0.0.1:55434:5432"
     volumes:
       - campuspulse_enterprise_pgdata:/var/lib/postgresql/data
 
@@ -368,7 +368,7 @@ Backend:
 
 - Next.js route handlers for REST endpoints.
 - Prisma ORM.
-- PostgreSQL on port `55432`.
+- PostgreSQL on port `55434`.
 - Zod for request validation.
 - `argon2` preferred for password hashing, or `bcrypt` if install constraints make Argon2 difficult.
 - Signed httpOnly session cookie or JWT in httpOnly cookie.
@@ -447,7 +447,7 @@ The judges should be able to infer engineering maturity from the repo without a 
 
 Required engineering artifacts:
 
-- `.env.example` with isolated Postgres port `55432`.
+- `.env.example` with isolated Postgres port `55434`.
 - Docker Compose file for this project database only.
 - Prisma schema and migrations.
 - Seed script with deterministic demo users/events.
@@ -496,7 +496,7 @@ Container view:
 
 ```text
 +-------------------+       +----------------------+       +-------------------+
-| Browser           | HTTP  | Next.js web/API      | SQL   | PostgreSQL 55432  |
+| Browser           | HTTP  | Next.js web/API      | SQL   | PostgreSQL 55434  |
 | Student/Organizer | ----> | route handlers       | ----> | source of truth   |
 +-------------------+       +----------------------+       +-------------------+
                                       |                            ^
@@ -3643,7 +3643,7 @@ Goals:
 - Install dependencies.
 - Read local Next.js docs required by `AGENTS.md`.
 - Add Prisma and server dependencies.
-- Configure isolated Postgres on port `55432`.
+- Configure isolated Postgres on port `55434`.
 
 Tasks:
 
@@ -4199,7 +4199,7 @@ README sections:
 
 - Product summary.
 - Requirements from PDF and how CampusPulse satisfies them.
-- Local setup with port `55432`.
+- Local setup with port `55434`.
 - Environment variables.
 - Prisma migration and seed commands.
 - Running Next.js on `3010`.
@@ -4222,7 +4222,7 @@ Keep the current PDFs in root for evaluator context.
 Recommended `.env.example`:
 
 ```bash
-DATABASE_URL="postgresql://campuspulse:campuspulse_dev_password@localhost:55432/campuspulse_enterprise?schema=public"
+DATABASE_URL="postgresql://campuspulse:campuspulse_dev_password@localhost:55434/campuspulse_enterprise?schema=public"
 NEXT_PUBLIC_APP_URL="http://localhost:3010"
 SESSION_SECRET="replace-with-a-long-random-secret"
 PASSWORD_HASH_PEPPER=""
@@ -4300,7 +4300,7 @@ Mitigation:
 Backend done:
 
 - Prisma schema and migrations exist.
-- Postgres runs on `55432`.
+- Postgres runs on `55434`.
 - Auth works with slow password hashing.
 - Role and ownership checks pass.
 - Event lifecycle works.

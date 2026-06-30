@@ -1,0 +1,379 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  STUDENT
+  ORGANIZER
+  ADMIN
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+  CANCELLED
+  ARCHIVED
+}
+
+enum RegistrationStatus {
+  CONFIRMED
+  WAITLISTED
+  CANCELLED_BY_USER
+  CANCELLED_BY_EVENT
+  CHECKED_IN
+}
+
+enum DomainEventType {
+  EVENT_PUBLISHED
+  EVENT_CANCELLED
+  EVENT_TIME_CHANGED
+  EVENT_LOCATION_CHANGED
+  REGISTRATION_CONFIRMED
+  REGISTRATION_WAITLISTED
+  REGISTRATION_CANCELLED
+  WAITLIST_PROMOTED
+  SEAT_STEWARD_REMINDER
+  CHECK_IN_COMPLETED
+}
+
+enum NotificationJobStatus {
+  PENDING
+  PROCESSING
+  SENT
+  FAILED
+  SKIPPED
+}
+
+enum NotificationChannel {
+  LOG
+  EMAIL
+  IN_APP
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  displayName  String
+  passwordHash String
+  role         UserRole
+  interests    String[] @default([])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  organizedEvents Event[]        @relation("EventOrganizer")
+  registrations   Registration[]
+  auditLogs       AuditLog[]     @relation("AuditActor")
+  bookmarks       EventBookmark[]
+  crewMembers     EventCrewMember[]
+  trailFollowers  TrailFollower[]
+  feedback        EventFeedback[]
+  notificationPreferences NotificationPreference[]
+
+  @@index([role])
+}
+
+model Event {
+  id                   String      @id @default(cuid())
+  organizerId          String
+  status               EventStatus @default(DRAFT)
+  title                String
+  slug                 String      @unique
+  description          String
+  startsAt             DateTime
+  endsAt               DateTime?
+  capacity             Int
+  locationText         String?
+  meetingUrl           String?
+  tags                 String[]    @default([])
+  terminal             String?
+  prepNote             String?
+  publishedAt          DateTime?
+  closedAt             DateTime?
+  cancelledAt          DateTime?
+  cancellationReason   String?
+  confirmedCount       Int         @default(0)
+  waitlistCount        Int         @default(0)
+  nextWaitlistSequence Int         @default(1)
+  version              Int         @default(1)
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+
+  organizer     User              @relation("EventOrganizer", fields: [organizerId], references: [id])
+  registrations Registration[]
+  domainEvents  DomainEvent[]
+  jobs          NotificationJob[]
+  bookmarks     EventBookmark[]
+  crews         EventCrew[]
+  trailEvents   TrailEvent[]
+  feedback      EventFeedback[]
+  checkIns      CheckIn[]
+
+  @@index([status, startsAt])
+  @@index([organizerId, status, startsAt])
+  @@index([startsAt])
+}
+
+model Registration {
+  id               String             @id @default(cuid())
+  eventId          String
+  userId           String
+  crewCode         String?
+  status           RegistrationStatus
+  waitlistSequence Int?
+  registeredAt     DateTime           @default(now())
+  confirmedAt      DateTime?
+  waitlistedAt     DateTime?
+  cancelledAt      DateTime?
+  cancelReason     String?
+  promotedAt       DateTime?
+  checkedInAt      DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  event        Event             @relation(fields: [eventId], references: [id])
+  user         User              @relation(fields: [userId], references: [id])
+  domainEvents DomainEvent[]
+  jobs         NotificationJob[]
+  checkIns     CheckIn[]
+
+  @@index([eventId, status])
+  @@index([eventId, status, waitlistSequence])
+  @@index([userId, status])
+  @@index([userId, eventId])
+  @@index([crewCode])
+}
+
+model DomainEvent {
+  id             String          @id @default(cuid())
+  type           DomainEventType
+  aggregateType  String
+  aggregateId    String
+  eventId        String?
+  userId         String?
+  registrationId String?
+  payloadJson    Json
+  occurredAt     DateTime        @default(now())
+  createdAt      DateTime        @default(now())
+
+  event        Event?          @relation(fields: [eventId], references: [id])
+  registration Registration?   @relation(fields: [registrationId], references: [id])
+  jobs         NotificationJob[]
+
+  @@index([type, occurredAt])
+  @@index([aggregateType, aggregateId, occurredAt])
+  @@index([eventId, occurredAt])
+}
+
+model NotificationJob {
+  id             String                @id @default(cuid())
+  type           DomainEventType
+  status         NotificationJobStatus @default(PENDING)
+  domainEventId  String
+  eventId        String?
+  userId         String?
+  registrationId String?
+  idempotencyKey String                @unique
+  payloadJson    Json
+  attempts       Int                   @default(0)
+  maxAttempts    Int                   @default(3)
+  availableAt    DateTime              @default(now())
+  lockedAt       DateTime?
+  lockedBy       String?
+  lastError      String?
+  sentAt         DateTime?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  domainEvent  DomainEvent            @relation(fields: [domainEventId], references: [id])
+  event        Event?                 @relation(fields: [eventId], references: [id])
+  registration Registration?          @relation(fields: [registrationId], references: [id])
+  deliveries   NotificationDelivery[]
+
+  @@index([status, availableAt])
+  @@index([eventId, createdAt])
+  @@index([userId, createdAt])
+}
+
+model NotificationDelivery {
+  id                String              @id @default(cuid())
+  jobId             String
+  channel           NotificationChannel
+  recipient         String
+  status            String
+  providerMessageId String?
+  dedupeKey         String              @unique
+  attempt           Int
+  responseJson      Json?
+  error             String?
+  createdAt         DateTime            @default(now())
+
+  job NotificationJob @relation(fields: [jobId], references: [id])
+
+  @@index([jobId, createdAt])
+}
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  actorUserId  String?
+  action       String
+  resourceType String
+  resourceId   String
+  metadataJson Json?
+  requestId    String?
+  createdAt    DateTime @default(now())
+
+  actor User? @relation("AuditActor", fields: [actorUserId], references: [id])
+
+  @@index([resourceType, resourceId, createdAt])
+  @@index([actorUserId, createdAt])
+}
+
+model EventBookmark {
+  id        String   @id @default(cuid())
+  eventId   String
+  userId    String
+  createdAt DateTime @default(now())
+
+  event Event @relation(fields: [eventId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@unique([eventId, userId])
+  @@index([userId, createdAt])
+}
+
+model EventCrew {
+  id        String   @id @default(cuid())
+  eventId   String
+  code      String   @unique
+  name      String
+  createdBy String
+  createdAt DateTime @default(now())
+
+  event   Event             @relation(fields: [eventId], references: [id])
+  members EventCrewMember[]
+
+  @@index([eventId])
+}
+
+model EventCrewMember {
+  id        String   @id @default(cuid())
+  crewId    String
+  userId    String
+  visibility String  @default("CREW")
+  createdAt DateTime @default(now())
+
+  crew EventCrew @relation(fields: [crewId], references: [id])
+  user User      @relation(fields: [userId], references: [id])
+
+  @@unique([crewId, userId])
+  @@index([userId])
+}
+
+model Trail {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  events    TrailEvent[]
+  followers TrailFollower[]
+}
+
+model TrailEvent {
+  id        String @id @default(cuid())
+  trailId   String
+  eventId   String
+  sortOrder Int    @default(0)
+
+  trail Trail @relation(fields: [trailId], references: [id])
+  event Event @relation(fields: [eventId], references: [id])
+
+  @@unique([trailId, eventId])
+  @@index([eventId])
+}
+
+model TrailFollower {
+  id        String   @id @default(cuid())
+  trailId   String
+  userId    String
+  createdAt DateTime @default(now())
+
+  trail Trail @relation(fields: [trailId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@unique([trailId, userId])
+  @@index([userId])
+}
+
+model EventFeedback {
+  id        String   @id @default(cuid())
+  eventId   String
+  userId    String
+  tags      String[] @default([])
+  note      String?
+  createdAt DateTime @default(now())
+
+  event Event @relation(fields: [eventId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@unique([eventId, userId])
+  @@index([eventId, createdAt])
+}
+
+model NotificationPreference {
+  id        String   @id @default(cuid())
+  userId    String
+  channel   NotificationChannel
+  urgency   String
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, channel, urgency])
+}
+
+model CheckIn {
+  id             String   @id @default(cuid())
+  eventId        String
+  registrationId String
+  userId         String
+  code           String
+  checkedInAt    DateTime @default(now())
+
+  event        Event        @relation(fields: [eventId], references: [id])
+  registration Registration @relation(fields: [registrationId], references: [id])
+
+  @@unique([eventId, userId])
+  @@unique([code])
+}
+
+model DemoDrillResult {
+  id          String   @id @default(cuid())
+  label       String
+  capacity    Int
+  attempts    Int
+  confirmed   Int
+  waitlisted  Int
+  overbooked  Int
+  duplicates  Int
+  payloadJson Json
+  createdAt   DateTime @default(now())
+}
+
+model WorkerHeartbeat {
+  id        String   @id @default(cuid())
+  workerId  String   @unique
+  status    String
+  seenAt    DateTime @default(now())
+  metaJson  Json?
+}
