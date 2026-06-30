@@ -66,6 +66,18 @@ export const registrationCancelSchema = z.object({
   reason: z.string().trim().min(3).max(500).optional(),
 });
 
+export const notificationJobQuerySchema = z.object({
+  eventId: z.string().trim().min(1).optional(),
+  status: z.enum(["PENDING", "PROCESSING", "SENT", "FAILED", "SKIPPED"]).optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+});
+
+export const concurrencyDrillSchema = z.object({
+  label: z.string().trim().min(3).max(120).default("Concurrency Arena"),
+  capacity: z.number().int().min(1).max(20).default(2),
+  attempts: z.number().int().min(2).max(50).default(8),
+});
+
 export const eventListQuerySchema = z.object({
   q: z.string().trim().max(120).optional(),
   tag: z.string().trim().max(32).optional(),
