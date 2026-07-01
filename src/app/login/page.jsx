@@ -1,118 +1,103 @@
 "use client";
 
 import { useState } from "react";
-import { authApi } from "../../lib/api";
+import { LogIn, ShieldCheck, User } from "lucide-react";
+import { authApi } from "@/lib/api";
+
+const demos = [
+  { label: "Student", icon: User, email: "student.maya@campuspulse.test", password: "password123" },
+  { label: "Organizer", icon: ShieldCheck, email: "organizer@campuspulse.test", password: "password123" },
+];
 
 export default function LoginPage() {
-  const [form, setForm] = useState({
-    email: "",
-    password: "",
-  });
-  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState({ email: "student.maya@campuspulse.test", password: "password123" });
+  const [loading, setLoading] = useState("");
   const [error, setError] = useState("");
 
-  const handleChange = (e) => {
-    setForm((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
-  };
-
-  async function handleSubmit(e) {
-    e.preventDefault();
+  async function submit(nextForm = form, intent = "login") {
     setError("");
-    setLoading(true);
-
+    setLoading(intent);
     try {
-      await authApi.login(form);
-      alert("Logged in successfully!");
+      await authApi.login(nextForm);
+      window.location.href = nextForm.email.startsWith("organizer") ? "/organizer" : "/events";
     } catch (err) {
-      setError(err.message || "Invalid email or password");
+      setError(err.message || "Invalid email or password.");
     } finally {
-      setLoading(false);
+      setLoading("");
     }
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-      <div className="w-full max-w-md bg-white border border-slate-100 rounded-3xl p-8 shadow-xl shadow-slate-100/50 space-y-6">
-        
-        {/* Header Section */}
-        <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-black text-white font-black text-lg shadow-md tracking-wider mx-auto">
-            CP
+    <main className="grid min-h-[100dvh] place-items-center bg-zinc-100 p-4" data-testid="login-page">
+      <section className="grid w-full max-w-5xl overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-xl md:grid-cols-[0.95fr_1.05fr]">
+        <div className="bg-zinc-950 p-8 text-white">
+          <div className="grid h-12 w-12 place-items-center rounded-lg bg-white text-sm font-black text-zinc-950">CP</div>
+          <h1 className="mt-8 text-4xl font-black leading-tight">Sign in to the campus operations console.</h1>
+          <p className="mt-4 text-sm leading-6 text-zinc-300">Use seeded accounts to inspect student registration, organizer queues, worker delivery, and proof mode.</p>
+          <div className="mt-8 grid gap-3">
+            {demos.map((demo) => {
+              const Icon = demo.icon;
+              return (
+                <button
+                  key={demo.label}
+                  data-testid={`login-demo-${demo.label.toLowerCase()}`}
+                  onClick={() => submit({ email: demo.email, password: demo.password }, demo.label)}
+                  className="flex items-center justify-between rounded-lg border border-white/15 bg-white/10 p-4 text-left transition hover:bg-white/15"
+                >
+                  <span className="flex items-center gap-3 font-semibold"><Icon className="h-5 w-5" /> {demo.label} Demo</span>
+                  <LogIn className="h-4 w-4" />
+                </button>
+              );
+            })}
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 mt-3">
-            Log in to CampusPulse
-          </h1>
-          <p className="text-sm text-slate-500 max-w-[280px] mx-auto">
-            Enter your details below to access your campus account.
-          </p>
         </div>
 
-        {/* Login Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            submit();
+          }}
+          className="grid gap-4 p-8"
+        >
           <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-              Email address
-            </label>
+            <h2 className="text-2xl font-black text-zinc-950">Account Login</h2>
+            <p className="mt-1 text-sm text-zinc-500">Credentials are stored with bcrypt and issued as an HTTP-only session cookie.</p>
+          </div>
+          <label className="grid gap-2 text-sm font-semibold text-zinc-700">
+            Email address
             <input
               name="email"
               type="email"
-              placeholder="student@school.com"
               value={form.email}
-              onChange={handleChange}
-              className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none transition focus:border-blue-600 focus:ring-4 focus:ring-blue-50"
+              onChange={(event) => setForm({ ...form, email: event.target.value })}
+              className="h-12 rounded-lg border border-zinc-200 px-3 text-zinc-950 outline-none focus:border-emerald-700"
               required
             />
-          </div>
-
-          <div>
-            <div className="flex justify-between items-center mb-1.5">
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                Password
-              </label>
-              <a href="/forgot-password" className="text-xs font-medium text-blue-600 hover:underline">
-                Forgot your password?
-              </a>
-            </div>
+          </label>
+          <label className="grid gap-2 text-sm font-semibold text-zinc-700">
+            Password
             <input
               name="password"
               type="password"
-              placeholder="••••••••"
               value={form.password}
-              onChange={handleChange}
-              className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none transition focus:border-blue-600 focus:ring-4 focus:ring-blue-50"
+              onChange={(event) => setForm({ ...form, password: event.target.value })}
+              className="h-12 rounded-lg border border-zinc-200 px-3 text-zinc-950 outline-none focus:border-emerald-700"
               required
             />
-          </div>
-
-          {/* Feedback Messages */}
-          {error && (
-            <div className="rounded-xl bg-red-50 border border-red-100 p-3 text-xs text-red-600 font-medium text-center">
-              ⚠️ {error}
-            </div>
-          )}
-
+          </label>
+          {error ? <p className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-800">{error}</p> : null}
           <button
             type="submit"
-            disabled={loading}
-            className="w-full rounded-xl bg-slate-950 text-white py-3.5 text-sm font-semibold hover:bg-slate-900 transition-all active:scale-[0.99] shadow-sm disabled:opacity-50"
+            disabled={Boolean(loading)}
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-zinc-950 px-4 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:opacity-60"
           >
             {loading ? "Signing in..." : "Sign In"}
           </button>
-        </form>
-
-        {/* Footer Link */}
-        <p className="text-center text-xs text-slate-500 pt-2">
-          Don't have an account?{" "}
-          <a href="/register" className="font-semibold text-blue-600 hover:text-blue-700 transition underline underline-offset-4">
-            Sign up
+          <a className="text-sm font-semibold text-emerald-800 underline underline-offset-4" href="/register">
+            Create student account
           </a>
-        </p>
-
-      </div>
+        </form>
+      </section>
     </main>
   );
 }

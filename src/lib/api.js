@@ -1,7 +1,6 @@
-const API_URL = "http://localhost:3001";
-
 export async function api(endpoint, options = {}) {
-  const response = await fetch(`${API_URL}${endpoint}`, {
+  const path = endpoint.startsWith("/api") ? endpoint : `/api${endpoint}`;
+  const response = await fetch(path, {
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
@@ -13,23 +12,32 @@ export async function api(endpoint, options = {}) {
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(data.message || "Something went wrong");
+    const error = data.error ?? {};
+    const message = error.message || data.message || "Something went wrong";
+    const thrown = new Error(message);
+    thrown.code = error.code;
+    thrown.details = error.details;
+    throw thrown;
   }
 
-  return data;
+  return data.data ?? data;
 }
 
 export const authApi = {
   login: (body) =>
-    api("/auth/login", {
+    api("/login", {
       method: "POST",
       body: JSON.stringify(body),
     }),
 
   register: (body) =>
-    api("/auth/register", {
+    api("/register", {
       method: "POST",
-      body: JSON.stringify(body),
+      body: JSON.stringify({
+        email: body.email,
+        password: body.password,
+        displayName: body.displayName ?? body.name,
+      }),
     }),
 };
 
@@ -44,8 +52,9 @@ export const eventsApi = {
     }),
 
   cancel: (registrationId) =>
-    api(`/registrations/${registrationId}`, {
-      method: "DELETE",
+    api(`/registrations/${registrationId}/cancel`, {
+      method: "POST",
+      body: JSON.stringify({ reason: "Cancelled from UI" }),
     }),
 };
 

@@ -1,150 +1,79 @@
 "use client";
 
 import { useState } from "react";
-import { authApi } from "../../lib/api";
+import { UserPlus } from "lucide-react";
+import { authApi } from "@/lib/api";
 
 export default function RegisterPage() {
-  const [form, setForm] = useState({
-    name: "",
-    role: "Student",
-    email: "",
-    password: "",
-  });
+  const [form, setForm] = useState({ displayName: "", email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleChange = (e) => {
-    setForm((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
-  };
-
-  async function handleSubmit(e) {
-    e.preventDefault();
+  async function handleSubmit(event) {
+    event.preventDefault();
     setError("");
     setLoading(true);
-
     try {
       await authApi.register(form);
-      alert("Account created successfully!");
+      window.location.href = "/events";
     } catch (err) {
-      setError(err.message || "Something went wrong");
+      setError(err.message || "Could not create account.");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-      <div className="w-full max-w-md bg-white border border-slate-100 rounded-3xl p-8 shadow-xl shadow-slate-100/50 space-y-6">
-        
-        {/* Header Section */}
-        <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-black text-white font-black text-lg shadow-md tracking-wider mx-auto">
-            CP
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 mt-3">
-            Create your EventGalaxy account
-          </h1>
-          <p className="text-sm text-slate-500 max-w-[280px] mx-auto">
-            Join as a student or organizer and start managing campus experiences.
-          </p>
+    <main className="grid min-h-[100dvh] place-items-center bg-zinc-100 p-4" data-testid="register-page">
+      <form onSubmit={handleSubmit} className="grid w-full max-w-lg gap-4 rounded-lg border border-zinc-200 bg-white p-8 shadow-xl">
+        <div className="grid h-12 w-12 place-items-center rounded-lg bg-zinc-950 text-sm font-black text-white">CP</div>
+        <div>
+          <h1 className="text-3xl font-black text-zinc-950">Create a student account</h1>
+          <p className="mt-2 text-sm leading-6 text-zinc-500">Public registration creates students only. Organizer accounts are seeded by campus staff.</p>
         </div>
-
-        {/* Registration Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-              Display name
-            </label>
-            <input
-              name="name"
-              type="text"
-              placeholder="Student Name"
-              value={form.name}
-              onChange={handleChange}
-              className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none transition focus:border-blue-600 focus:ring-4 focus:ring-blue-50"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-              Role
-            </label>
-            <div className="relative">
-              <select
-                name="role"
-                value={form.role}
-                onChange={handleChange}
-                className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none transition appearance-none focus:border-blue-600 focus:ring-4 focus:ring-blue-50 text-slate-800"
-              >
-                <option value="Student">Student</option>
-                <option value="Organizer">Organizer</option>
-              </select>
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-xs">
-                ▼
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-              Email
-            </label>
-            <input
-              name="email"
-              type="email"
-              placeholder="student@school.com"
-              value={form.email}
-              onChange={handleChange}
-              className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none transition focus:border-blue-600 focus:ring-4 focus:ring-blue-50"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-              Password
-            </label>
-            <input
-              name="password"
-              type="password"
-              placeholder="••••••••"
-              value={form.password}
-              onChange={handleChange}
-              className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none transition focus:border-blue-600 focus:ring-4 focus:ring-blue-50"
-              required
-            />
-          </div>
-
-          {/* Feedback Messages */}
-          {error && (
-            <div className="rounded-xl bg-red-50 border border-red-100 p-3 text-xs text-red-600 font-medium text-center">
-              ⚠️ {error}
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-xl bg-slate-950 text-white py-3.5 text-sm font-semibold hover:bg-slate-900 transition-all active:scale-[0.99] shadow-sm disabled:opacity-50"
-          >
-            {loading ? "Creating account..." : "Create account"}
-          </button>
-        </form>
-
-        {/* Footer Link */}
-        <p className="text-center text-xs text-slate-500 pt-2">
-          Already have an account?{" "}
-          <a href="/login" className="font-semibold text-blue-600 hover:text-blue-700 transition underline underline-offset-4">
-            Log in
-          </a>
-        </p>
-
-      </div>
+        <label className="grid gap-2 text-sm font-semibold text-zinc-700">
+          Display name
+          <input
+            value={form.displayName}
+            onChange={(event) => setForm({ ...form, displayName: event.target.value })}
+            className="h-12 rounded-lg border border-zinc-200 px-3 text-zinc-950 outline-none focus:border-emerald-700"
+            required
+          />
+        </label>
+        <label className="grid gap-2 text-sm font-semibold text-zinc-700">
+          Email
+          <input
+            type="email"
+            value={form.email}
+            onChange={(event) => setForm({ ...form, email: event.target.value })}
+            className="h-12 rounded-lg border border-zinc-200 px-3 text-zinc-950 outline-none focus:border-emerald-700"
+            required
+          />
+        </label>
+        <label className="grid gap-2 text-sm font-semibold text-zinc-700">
+          Password
+          <input
+            type="password"
+            minLength={8}
+            value={form.password}
+            onChange={(event) => setForm({ ...form, password: event.target.value })}
+            className="h-12 rounded-lg border border-zinc-200 px-3 text-zinc-950 outline-none focus:border-emerald-700"
+            required
+          />
+        </label>
+        {error ? <p className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-800">{error}</p> : null}
+        <button
+          type="submit"
+          disabled={loading}
+          className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-zinc-950 px-4 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:opacity-60"
+        >
+          <UserPlus className="h-4 w-4" />
+          {loading ? "Creating..." : "Create Account"}
+        </button>
+        <a className="text-sm font-semibold text-emerald-800 underline underline-offset-4" href="/login">
+          Back to login
+        </a>
+      </form>
     </main>
   );
 }
